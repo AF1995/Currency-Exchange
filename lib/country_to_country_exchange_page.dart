@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'country.dart';
 import 'my_widgets.dart';
 import 'countries.dart';
+import 'login_page.dart';
 
+late List<String> countryNames;
+late List<String> currencyCodes;
 final List<String> chooseByOptions = ["name", "code"];
-final List<String> countryNames = Country.getNames(countries);
-final List<String> currencyCodes = Country.getCodes(countries);
 late List<String> optionsInDropDownMenuFrom;
 late List<String> optionsInDropDownMenuTo;
 
@@ -20,14 +21,22 @@ class _ExchangePageState extends State<ExchangePage> {
   String chooseBy = chooseByOptions[0];
   String currentFrom = "";
   String currentTo = "";
-  bool initialized = false;
+  bool initialized = false, init = false;
   String? ratio;
   String? amount = "";
   double result = 0.0;
 
+  @override
+  void initState(){
+    populateCountries(update).then((value) => {});
+    super.initState();
+  }
+
   /// Contains whatever needs to be done only once for the page.
   ///
   void initialize(){
+    countryNames = Country.getNames(countries);
+    currencyCodes = Country.getCodes(countries);
     optionsInDropDownMenuTo = countryNames.toList();
     optionsInDropDownMenuFrom = countryNames.toList();
     currentTo = optionsInDropDownMenuFrom.removeAt(0);
@@ -36,6 +45,16 @@ class _ExchangePageState extends State<ExchangePage> {
     updateRatio();
 
     initialized = true;
+  }
+
+  void update(bool success){
+    if(success){
+      setState(() => init = true);
+    }
+    else {
+      // TODO: Display a button to retry.
+      init = false;
+    }
   }
 
   /// Rebuilds the interface taking into consideration the following:
@@ -77,7 +96,7 @@ class _ExchangePageState extends State<ExchangePage> {
 
   /// Updates the options for the dropDownMenus contents such that the
   /// currently selected item in a list won't exist in the other.
-  void newNameOrCodeSelected(){
+  void newNameOrCodeSelected() async{
     setState(() {
       switch(chooseBy)
       {
@@ -159,13 +178,57 @@ class _ExchangePageState extends State<ExchangePage> {
       }
     });
   }
+  bool isLoggedIn = false;
+  String userName = "";
+  bool settingsTransferred = false;
+
+  void logout() {
+    setState(() {
+      isLoggedIn = false;
+      userName = "";
+    });
+  }
+
+  void login() {
+    setState(() {
+      isLoggedIn = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if(!initialized) initialize();
-    return Scaffold(
+    if(!settingsTransferred) {
+      userName = ModalRoute.of(context)!.settings.arguments as String;
+      settingsTransferred = true;
+    }
+    if(userName.isNotEmpty){
+      isLoggedIn = true;
+    }
+    else {
+      isLoggedIn = false;
+    }
+    if (!initialized && init) initialize();
+    return !init ? const CircularProgressIndicator() : Scaffold(
       appBar: AppBar(
-        title: const Text("Country to Country Exchange",),
+        actions: <Widget>[
+          if (isLoggedIn)
+            IconButton(
+              onPressed: () {
+                logout();
+              },
+              icon: const Icon(Icons.logout),
+            )
+          else
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const Login()),
+                );
+              },
+              icon: const Icon(Icons.login),
+            ),
+        ],
+        title: const Text("Country to Country Exchange"),
         centerTitle: true,
       ),
       body: Center(

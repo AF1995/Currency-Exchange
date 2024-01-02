@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 class Country {
   final String _name;
   final String _currencyCode;
@@ -8,7 +10,19 @@ class Country {
 
   Country(this._name, this._currencyCode, this._ratioFromUSD, this._ratioToUSD, this._flagUnicode)
   {
-    Runes flag = Runes(_flagUnicode);
+    //IconData flag1 = const IconData(0x1F1FA);
+    //IconData flag2 = const IconData(0x1F1F8);
+    //String finalUnicode = String.fromCharCode(flag1.codePoint) + String.fromCharCode(flag2.codePoint);
+    String finalUnicode = "";
+    List<String> unicodes = _flagUnicode.split("-");
+    if(unicodes.length != 2){
+      unicodes = "0x1F1FA-0x1F1F8".split("-");
+    }
+    for(String unicode in unicodes){
+      IconData flag = IconData(int.parse(unicode));
+      finalUnicode += String.fromCharCode(flag.codePoint);
+    }
+    Runes flag = Runes(/*_flagUnicode*/finalUnicode);
     _flag = String.fromCharCodes(flag);
   }
 

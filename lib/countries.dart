@@ -1,6 +1,36 @@
 import 'country.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert' as convert;
 
-List<Country> countries = [
+List<Country> countries = [];
+
+Future<String?> populateCountries(Function(bool success) update) async {
+  try {
+    final url = Uri.https("currencies-exchange.000webhostapp.com", 'getCountries.php');
+    final response = await http.get(url)
+        .timeout(const Duration(seconds: 5));
+    countries.clear();
+    if (response.statusCode == 200) {
+      final jsonResponse = convert.jsonDecode(response.body);
+      for (var row in jsonResponse) {
+        Country country = Country(
+            row['countryName'],
+            row['currencyCode'],
+            double.parse(row['ratioFromUSD']),
+            double.parse(row['ratioToUSD']),
+            row['flagUnicode']);
+        countries.add(country);
+      }
+      update(true);
+    }
+  }
+  catch(e) {
+    update(false);
+  }
+}
+
+
+/*List<Country> countries = [
   Country('United States','USD',1.0,1.0,"\u{1F1FA}\u{1F1F8}"),
   Country('United kingdom','GBP',0.799,1.0, "\u{1F1EC}\u{1F1E7}"),
   Country('Indian','INR',83.351,0.012005,"\u{1F1EE}\u{1F1F3}"),
@@ -26,4 +56,4 @@ List<Country> countries = [
   Country('Qatar','QAR',3.640000,0.274725,  "\u{1F1F6}\u{1F1E6}"),
   Country('Oman','OMR',0.384963,2.597723,  "\u{1F1F4}\u{1F1F2}"),
   Country('South Africa','ZAR',18.348762,0.052960,  "\u{1F1FF}\u{1F1E6}"),
-];
+];*/
